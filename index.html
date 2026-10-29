@@ -985,6 +985,78 @@ sup.cite{font-size:.7em; vertical-align:super; line-height:0;}
 @media (max-width:900px){ .desk2{margin-left:0;} .ess{grid-template-columns:1fr; gap:30px;} .ess .txt{text-align:center;} .ess .ticks{display:inline-grid; text-align:left;} .desk2{--sw:min(300px, 66vw); margin-top:10px;} }
 @media (max-width:480px){ .gtabs button{padding:8px 11px; font-size:13px;} .sh.tp{transform:translate3d(-22%, 22px, 0) rotate(-5deg);} .sh.rf{transform:translate3d(24%, 30px, 0) rotate(4deg);} .sh .pad{inset:26px 26px; font-size:8px;} }
 @media (prefers-reduced-motion: reduce){ .sh, .pn, .gtabs .hl{transition:none;} .cite, .ren, .gbadge.pop{animation:none;} }
+
+/* ===================== high-level motion ===================== */
+/* ink-particle wordmark */
+.inkword{position:relative; height:76px; margin:14px 0 2px; pointer-events:auto;}
+.inkword canvas{position:absolute; left:50%; top:0; transform:translateX(-50%); height:76px; display:block; cursor:crosshair;}
+@media (max-width:760px){ .inkword{height:52px;} .inkword canvas{height:52px;} }
+/* the hero card dissolves into ink that streams into "Get it" */
+.inkstream{position:fixed; left:0; top:0; width:100vw; height:100vh; z-index:45; pointer-events:none; display:none;}
+.inkstream.on{display:block;}
+.nav [data-get].drink{box-shadow:0 0 0 calc(var(--fill, 0) * 6px) rgb(var(--a-rgb) / calc(var(--fill, 0) * .22)), 0 10px 26px rgb(var(--a-rgb) / calc(.3 + var(--fill, 0) * .3));}
+.nav [data-get].landed{animation:gotLetter 1.1s cubic-bezier(.2,.9,.25,1);}
+@keyframes gotLetter{0%{transform:scale(1); box-shadow:0 0 0 0 rgb(var(--a-rgb) / .45);} 22%{transform:scale(1.08); box-shadow:0 0 0 0 rgb(var(--a-rgb) / .45), 0 14px 34px rgb(var(--a-rgb) / .45);} 100%{transform:scale(1); box-shadow:0 0 0 22px rgb(var(--a-rgb) / 0);}}
+/* flying documents */
+.fly{position:relative; height:330vh; margin-top:40px;}
+.fly-stick{position:sticky; top:0; height:100vh; overflow:hidden; perspective:1100px; perspective-origin:50% 46%;}
+.fly-scene{position:absolute; inset:0; transform-style:preserve-3d; will-change:transform;}
+.fcard{position:absolute; left:50%; top:50%; width:360px; aspect-ratio:760/489; margin:-116px 0 0 -180px; border-radius:14px; overflow:hidden; background:#fff;
+  box-shadow:0 2px 6px rgba(15,31,25,.08), 0 30px 70px rgba(15,31,25,.18); will-change:transform, opacity; backface-visibility:hidden; opacity:0;}
+.fcard img{display:block; width:100%; height:100%; object-fit:cover;}
+.fcard b{position:absolute; left:10px; bottom:10px; padding:5px 10px; border-radius:99px; font:600 12px var(--sans); color:#fff; background:linear-gradient(135deg, var(--accent-hi), var(--accent-deep)); box-shadow:0 6px 16px rgb(var(--a-rgb) / .35);}
+.fly-cap{position:absolute; left:0; right:0; bottom:8vh; text-align:center; pointer-events:none; z-index:5;}
+.fly-cap h2{font:700 clamp(30px, 4vw, 52px)/1.1 var(--serif); margin:10px 0 8px; transition:opacity .35s, transform .5s var(--spring);}
+.fly-cap p{color:var(--muted); font-size:18px; margin:0; transition:opacity .35s;}
+.fly-cap.sw h2, .fly-cap.sw p{opacity:0; transform:translate3d(0,10px,0);}
+.fly-hint{position:absolute; left:50%; top:12vh; transform:translateX(-50%); font:600 12.5px/1 var(--sans); letter-spacing:.16em; text-transform:uppercase; color:var(--accent-ink); z-index:5;}
+@media (max-width:760px){ .fly{height:260vh;} .fcard{width:220px; margin:-71px 0 0 -110px; border-radius:10px;} .fly-cap p{font-size:15px; padding:0 16px;} }
+/* cinematic essay */
+.cine{position:relative; height:340vh;}
+.cine-stick{position:sticky; top:0; height:100vh; display:grid; align-items:center; overflow:hidden;}
+.cine-in{display:grid; grid-template-columns:minmax(0, .9fr) minmax(0, 1.1fr); gap:60px; align-items:center;}
+.cine-txt h2{font:700 clamp(30px, 3.6vw, 48px)/1.1 var(--serif); margin:12px 0 22px;}
+.cine-steps{list-style:none; margin:0; padding:0; display:grid; gap:12px; counter-reset:cs;}
+.cine-steps li{counter-increment:cs; display:flex; align-items:center; gap:12px; font:500 17px var(--sans); color:var(--dim); transition:color .3s;}
+.cine-steps li::before{content:counter(cs); width:30px; height:30px; flex:none; display:grid; place-items:center; border-radius:50%; border:1.5px solid var(--line2); font:600 13px var(--sans); transition:background-color .3s, color .3s, border-color .3s;}
+.cine-steps li.on{color:var(--ink);} .cine-steps li.on::before{background:linear-gradient(135deg, var(--accent-hi), var(--accent-deep)); border-color:transparent; color:#fff;}
+.cine-steps li.done::before{content:"✓"; background:rgb(var(--a-rgb) / .14); border-color:transparent; color:var(--accent-ink);}
+.cine-bar{margin-top:26px; height:4px; border-radius:4px; background:var(--line2); overflow:hidden; max-width:320px;}
+.cine-bar i{display:block; height:100%; width:100%; transform-origin:0 50%; transform:scaleX(0); background:linear-gradient(90deg, var(--accent), var(--gold));}
+.cine-paper{position:relative; --lh:1.55; --ind:0px; background:#fff; color:#1b1b1b; border-radius:6px; padding:52px 56px 46px; min-height:540px; box-shadow:0 2px 6px rgba(15,31,25,.06), 0 30px 80px rgba(15,31,25,.16);
+  font:15px/var(--lh) Calibri, Carlito, "Segoe UI", Arial, sans-serif;}
+.cine-paper.mla{font-family:"Times New Roman", Times, Georgia, serif;}
+.cine-paper .cp-swap{transition:opacity .25s;}
+.cine-paper.flash .cp-swap{opacity:0;}
+.cp-hdr{position:absolute; top:22px; right:56px; opacity:0; transform:translate3d(0,-8px,0); transition:opacity .5s, transform .6s var(--spring);}
+.cp-head{display:grid; overflow:hidden; max-height:0; opacity:0; transition:max-height .6s var(--ease), opacity .5s;}
+.cine-paper.mla .cp-hdr{opacity:1; transform:none;} .cine-paper.mla .cp-head{max-height:140px; opacity:1;}
+.cp-title{font-weight:700; font-size:20px; margin:0 0 8px; transition:text-align .3s;}
+.cine-paper.mla .cp-title{font-weight:400; font-size:15px; text-align:center; margin:0;}
+.cp-p{margin:0 0 10px; text-indent:var(--ind);}
+.cine-paper.mla .cp-p{margin:0;}
+.er{text-decoration:underline wavy transparent; text-decoration-skip-ink:none; text-underline-offset:3px; transition:text-decoration-color .3s;}
+.er.show{text-decoration-color:#e11d48;}
+.er.fixed{text-decoration-color:transparent; background:rgb(var(--a-rgb) / .16); border-radius:3px; transition:background-color 1.2s;}
+.er.fixed.old{background:transparent;}
+.cp-cite{color:var(--accent-ink);}
+.cp-caret{position:absolute; left:0; top:0; width:2px; height:18px; background:var(--accent-deep); border-radius:2px; opacity:0; transition:opacity .2s; animation:cpBlink 1s steps(2) infinite;}
+@keyframes cpBlink{50%{opacity:.25;}}
+.cp-wc{margin-top:18px; opacity:0; transform:translate3d(0,16px,0); transition:opacity .5s, transform .7s var(--spring);}
+.cine-paper.mla .cp-wc{opacity:1; transform:none;}
+.cp-wc .h{text-align:center;} .cp-wc .e{padding-left:28px; text-indent:-28px;}
+.cp-badge{position:absolute; left:-14px; top:-14px; padding:6px 12px; border-radius:99px; font:700 12px var(--sans); letter-spacing:.06em; color:#fff; background:linear-gradient(135deg, var(--accent-hi), var(--accent-deep));
+  box-shadow:0 10px 24px rgb(var(--a-rgb) / .35); opacity:0; transform:scale(.6); transition:opacity .4s, transform .6s var(--spring);}
+.cine-paper.mla .cp-badge{opacity:1; transform:none;}
+@media (max-width:900px){ .cine{height:300vh;} .cine-in{grid-template-columns:1fr; gap:22px;} .cine-txt h2{font-size:28px; margin:8px 0 12px;} .cine-steps{grid-template-columns:1fr 1fr; gap:6px 12px;} .cine-steps li{font-size:14px;} .cine-bar{display:none;}
+  .cine-paper{padding:30px 22px 26px; min-height:0; font-size:12.5px;} .cp-hdr{right:22px; top:12px;} .cp-title{font-size:16px;} }
+/* light through glass */
+.gbx{position:absolute; inset:0; overflow:hidden; border-radius:inherit; pointer-events:none; z-index:3;}
+.gbx b{position:absolute; top:-20%; bottom:-20%; left:0; width:38%; transform:translate3d(-140%,0,0) skewX(-20deg);
+  background:linear-gradient(90deg, transparent, rgba(14,165,233,.10) 28%, rgba(56,189,248,.22) 42%, rgba(255,255,255,.85) 49%, rgba(167,139,250,.20) 56%, rgba(236,72,153,.08) 64%, transparent);
+  animation:gbeam 8s cubic-bezier(.45,.05,.35,1) infinite; animation-delay:var(--bd, 0s); will-change:transform;}
+@keyframes gbeam{0%{transform:translate3d(-140%,0,0) skewX(-20deg);} 24%, 100%{transform:translate3d(380%,0,0) skewX(-20deg);}}
+@media (prefers-reduced-motion: reduce){ .gbx{display:none;} .fly{height:auto;} .fly-stick{position:relative; height:70vh;} .cine{height:auto;} .cine-stick{position:relative; height:auto; padding:40px 0;} }
 </style>
 <script>try{ if (!matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("intro-on"); }catch(e){}</script>
 </head>
@@ -1044,6 +1116,7 @@ sup.cite{font-size:.7em; vertical-align:super; line-height:0;}
     </div>
     <div class="sheet" id="sheet">
     <div class="pill rv" style="--d:.05s"><b>Free</b> Windows 10 &amp; 11 · works offline · no account</div>
+    <div class="inkword" id="inkword" aria-hidden="true"><canvas></canvas></div>
     <h1 id="h1" aria-label="Every document, beautifully done."><span class="ln"><span data-split data-base="0">Every</span><span class="sp"></span><span class="rot" id="rot"><span class="w" data-split data-base=".17">document</span></span><span data-split data-base=".42">,</span></span><span class="ln shine" data-split data-base=".55" data-grad>beautifully done.</span></h1>
     <p class="lede rv" style="--d:.9s">Write reports, letters and invoices from polished templates, edit any PDF, read scanned pages, convert files, and draw Gantt charts and flowcharts — all in one calm, fast app.</p>
     <div class="cta rv" style="--d:1.05s">
@@ -1102,6 +1175,14 @@ sup.cite{font-size:.7em; vertical-align:super; line-height:0;}
   </div></div>
 
 
+
+  <section class="fly" id="fly" aria-label="Every kind of document">
+    <div class="fly-stick">
+      <div class="fly-hint">Scroll to fly through</div>
+      <div class="fly-scene" id="flyScene"></div>
+      <div class="fly-cap" id="flyCap"><div class="eyebrow">Every kind of document</div><h2 id="flyT">Reports that write themselves.</h2><p id="flyP">Cover, contents, charts and page numbers — already done.</p></div>
+    </div>
+  </section>
 
   <section class="wrap desk-sec">
     <div class="head">
@@ -1195,6 +1276,31 @@ sup.cite{font-size:.7em; vertical-align:super; line-height:0;}
     </div>
   </section>
 
+
+  <section class="cine" id="cine" aria-label="A messy essay fixes itself">
+    <div class="cine-stick">
+      <div class="wrap cine-in">
+        <div class="cine-txt">
+          <div class="eyebrow">Watch it work</div>
+          <h2>A messy essay, <span class="grad">fixed as you scroll.</span></h2>
+          <ol class="cine-steps" id="cineSteps"><li>Spot the mistakes</li><li>Fix them</li><li>Cite the source</li><li>Format as MLA 9</li></ol>
+          <div class="cine-bar"><i id="cineBar"></i></div>
+        </div>
+        <div class="cine-paper" id="cinePaper" aria-hidden="true">
+          <span class="cp-badge">MLA 9</span>
+          <div class="cp-hdr">Mehta 1</div>
+          <div class="cp-swap">
+            <div class="cp-head"><span>Rahul Mehta</span><span>Dr. Anita Kulkarni</span><span>English 102</span><span>21 October 2026</span></div>
+            <div class="cp-title"><span class="er" data-to="Climate Change and Coastal Cities">climate change and coastal citys</span></div>
+            <p class="cp-p">Coastal cities face rising seas and stronger storms, and the <span class="er" data-to="environment">enviroment</span> around them is changing fast. Planners now treat these risks as certain, and <span class="er" data-to="their">there</span> budgets are changing to match<span class="cp-cite" id="cpCite"></span>.</p>
+            <p class="cp-p">Mumbai offers a clear example. Its mangroves absorb <span class="er" data-to="a lot">alot</span> of storm surge, yet many have been cleared for construction.</p>
+            <div class="cp-wc"><div class="h">Works Cited</div><div class="e">Ghosh, Amitav. <i>The Great Derangement</i>. U of Chicago P, 2016.</div></div>
+          </div>
+          <i class="cp-caret" id="cpCaret"></i>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section class="wrap" id="essays">
     <div class="head">
@@ -1652,12 +1758,7 @@ sup.cite{font-size:.7em; vertical-align:super; line-height:0;}
 
   // ===== v14: the document story =====
   // hero sheet tips back as you scroll down to the app window
-  (function(){ var sh = document.getElementById("sheet"); if (!sh || calm || matchMedia("(pointer: coarse)").matches || innerWidth < 760) return; var tk = false, done = false;
-    sh.addEventListener("animationend", function(){ done = true; sh.style.animation = "none"; upd(); }, {once: true});
-    function upd(){ tk = false; if (!done) return; var p = Math.min(1, Math.max(0, scrollY / (innerHeight * .8))), e = p * p * (3 - 2 * p);
-      sh.style.transform = e ? "perspective(1400px) translate3d(0," + (e * 90).toFixed(1) + "px,0) rotateX(" + (e * 32).toFixed(2) + "deg) scale(" + (1 - e * .1).toFixed(4) + ")" : "";
-      sh.style.opacity = (1 - e * .85).toFixed(3); }
-    addEventListener("scroll", function(){ if (!tk){ tk = true; requestAnimationFrame(upd); } }, {passive: true}); })();
+  (function(){ var sh = document.getElementById("sheet"); if (sh) sh.addEventListener("animationend", function(){ sh.style.animation = "none"; }, {once: true}); })();   // the paper plane takes it from here
 
   // the book: pages turn with the scroll
   (function(){ var wrap = document.getElementById("bookwrap"); if (!wrap || getComputedStyle(wrap).display === "none") return;
@@ -2054,6 +2155,225 @@ sup.cite{font-size:.7em; vertical-align:super; line-height:0;}
       if (e.isIntersecting && !user) timer = setInterval(function(){ var ks = Object.keys(S); go(ks[(ks.indexOf(cur) + 1) % ks.length]); }, 3600);
     });
   }, {threshold: .45}).observe(ess);
+})();
+
+/* ===================== high-level motion ===================== */
+(function(){
+  var calm = matchMedia("(prefers-reduced-motion: reduce)").matches, small = matchMedia("(max-width:760px)").matches;
+  var vw = innerWidth, vh = innerHeight; addEventListener("resize", function(){ vw = innerWidth; vh = innerHeight; }, {passive: true});
+  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+  function sm(a, b, x){ var t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }
+  var tasks = [], raf = 0;
+  function tick(){ raf = 0; tasks.forEach(function(f){ f(); }); }
+  function ask(){ if (!raf) raf = requestAnimationFrame(tick); }
+  addEventListener("scroll", ask, {passive: true}); addEventListener("resize", ask, {passive: true});
+
+  // ---------- 1. "Document Studio" made of ink ----------
+  (function(){
+    var box = document.getElementById("inkword"); if (!box) return;
+    var cv = box.querySelector("canvas"), g = cv.getContext("2d"), dpr = Math.min(2, devicePixelRatio || 1);
+    var W = 0, H = 0, parts = [], mx = -1e4, my = -1e4, run = 0, crisp = false, t0 = 0, font = "";
+    function cols(){ var cs = getComputedStyle(document.documentElement); return [cs.getPropertyValue("--accent-deep").trim() || "#2563EB", cs.getPropertyValue("--accent").trim() || "#0EA5E9", cs.getPropertyValue("--gold").trim() || "#58c5d4"]; }
+    function lerpCol(a, b, t){ var pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16); var r = Math.round(((pa >> 16) & 255) * (1 - t) + ((pb >> 16) & 255) * t), gg = Math.round(((pa >> 8) & 255) * (1 - t) + ((pb >> 8) & 255) * t), bb = Math.round((pa & 255) * (1 - t) + (pb & 255) * t); return "rgb(" + r + "," + gg + "," + bb + ")"; }
+    function build(){
+      H = small ? 52 : 76; var fs = small ? 38 : 58; font = "700 " + fs + "px Fraunces, Georgia, serif";
+      var m = document.createElement("canvas").getContext("2d"); m.font = font; W = Math.ceil(m.measureText("Document Studio").width + 40);
+      cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + "px"; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var off = document.createElement("canvas"); off.width = W; off.height = H; var o = off.getContext("2d"); o.font = font; o.textBaseline = "middle"; o.textAlign = "center"; o.fillStyle = "#000"; o.fillText("Document Studio", W / 2, H / 2 + 2);
+      var d = o.getImageData(0, 0, W, H).data, step = small ? 3 : 2.5, C = cols(); parts = [];
+      for (var y = 0; y < H; y += step) for (var x = 0; x < W; x += step){ var X = Math.round(x), Y = Math.round(y); if (d[(Y * W + X) * 4 + 3] > 140){
+        var t = X / W, col = t < .5 ? lerpCol(C[0], C[1], t * 2) : lerpCol(C[1], C[2], (t - .5) * 2), a = Math.random() * 6.283, r = 120 + Math.random() * 260;
+        parts.push({hx: X, hy: Y, x: W / 2 + Math.cos(a) * r, y: H / 2 + Math.sin(a) * r * .5, vx: 0, vy: 0, c: col, s: .9 + Math.random() * .9, d: Math.random() * .9}); } }
+    }
+    function drawCrisp(){
+      g.clearRect(0, 0, W, H); var C = cols(), gr = g.createLinearGradient(0, 0, W, 0); gr.addColorStop(0, C[0]); gr.addColorStop(.5, C[1]); gr.addColorStop(1, C[2]);
+      g.font = font; g.textBaseline = "middle"; g.textAlign = "center"; g.fillStyle = gr; g.fillText("Document Studio", W / 2, H / 2 + 2); crisp = true;
+    }
+    function loop(now){
+      run = 0; crisp = false;
+      var el = (now - t0) / 1000, moving = 0;
+      g.clearRect(0, 0, W, H);
+      for (var i = 0; i < parts.length; i++){
+        var p = parts[i], k = el < p.d ? 0 : .085;
+        var dx = p.x - mx, dy = p.y - my, d2 = dx * dx + dy * dy;
+        if (d2 < 2600){ var f = (2600 - d2) / 2600 * 2.6, dd = Math.sqrt(d2) || 1; p.vx += dx / dd * f; p.vy += dy / dd * f; }
+        p.vx = (p.vx + (p.hx - p.x) * k) * .82; p.vy = (p.vy + (p.hy - p.y) * k) * .82; p.x += p.vx; p.y += p.vy;
+        if (Math.abs(p.hx - p.x) + Math.abs(p.hy - p.y) > .4) moving++;
+        g.fillStyle = p.c; g.globalAlpha = el < p.d ? 0 : Math.min(1, (el - p.d) * 2.2); g.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s + .4, p.s + .4);
+      }
+      g.globalAlpha = 1;
+      if (moving > 6 || el < 1.4) run = requestAnimationFrame(loop); else drawCrisp();   // settled: sharp text, nothing running
+    }
+    function start(){ if (!run) run = requestAnimationFrame(loop); }
+    function init(){ build(); if (calm){ drawCrisp(); return; } t0 = performance.now(); start(); }
+    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function(){ setTimeout(init, 250); });
+    if (!small) cv.addEventListener("pointermove", function(e){ var r = cv.getBoundingClientRect(); mx = (e.clientX - r.left) * W / r.width; my = (e.clientY - r.top) * H / r.height; if (!calm) start(); });
+    cv.addEventListener("pointerleave", function(){ mx = my = -1e4; if (!calm) start(); });
+  })();
+
+  // ---------- 2. the hero card dissolves into ink that streams into "Get it" ----------
+  (function(){
+    var sheet = document.getElementById("sheet"), btn = document.querySelector(".nav [data-get]");
+    if (!sheet || !btn || calm) return;
+    var cv = document.createElement("canvas"), g = cv.getContext("2d"), dpr = Math.min(2, devicePixelRatio || 1);
+    cv.className = "inkstream"; cv.setAttribute("aria-hidden", "true"); document.body.appendChild(cv);
+    var drops = null, landed = false, cw = 0, ch = 0;
+    function size(){ cw = innerWidth; ch = innerHeight; cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr); g.setTransform(dpr, 0, 0, dpr, 0, 0); }
+    function rgb(c){ var m = /rgba?\(([^)]+)\)/.exec(c || ""); if (!m) return null; var v = m[1].split(",").map(parseFloat); return v.length > 3 && v[3] < .1 ? null : "rgb(" + Math.round(v[0]) + "," + Math.round(v[1]) + "," + Math.round(v[2]) + ")"; }
+    // where the ink is: every line of text in the card (its own colour), plus a light dusting of paper
+    function sample(){
+      var r = sheet.getBoundingClientRect(), out = [], max = small ? 650 : 1700, cs = getComputedStyle(document.documentElement);
+      var acc = "rgb(" + (cs.getPropertyValue("--a-rgb").trim() || "14 165 233").split(/\s+/).join(",") + ")", deep = cs.getPropertyValue("--accent-deep").trim() || "#2563EB";
+      var tw = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT, {acceptNode: function(n){ return n.textContent.trim() ? 1 : 3; }}), n, boxes = [];
+      while ((n = tw.nextNode())){
+        var el = n.parentElement; if (!el || el.closest(".fold")) continue;
+        var col = rgb(getComputedStyle(el).color) || (Math.random() < .5 ? acc : deep), rg = document.createRange(); rg.selectNodeContents(n);
+        [].forEach.call(rg.getClientRects(), function(b){ if (b.width > 2 && b.height > 2) boxes.push([b, col]); });
+      }
+      var ic = sheet.querySelector("#inkword canvas"); if (ic){ var ib = ic.getBoundingClientRect(); boxes.push([{left: ib.left + ib.width * .12, top: ib.top + ib.height * .2, width: ib.width * .76, height: ib.height * .6}, acc]); }
+      var area = boxes.reduce(function(t, x){ return t + x[0].width * x[0].height; }, 0) || 1, textN = Math.round(max * .78);
+      boxes.forEach(function(x){
+        var b = x[0], k = Math.max(1, Math.round(textN * b.width * b.height / area));
+        for (var i = 0; i < k; i++) out.push({ox: b.left - r.left + Math.random() * b.width, oy: b.top - r.top + b.height * (.2 + Math.random() * .62), c: x[1], s: .9 + Math.random() * 1.5});
+      });
+      for (var j = 0; j < max - textN; j++) out.push({ox: Math.random() * r.width, oy: Math.random() * r.height, c: Math.random() < .7 ? "rgb(196,222,246)" : "rgb(150,200,240)", s: 1.2 + Math.random() * 2.2, paper: 1});
+      // the ink travels in six currents that sweep up together, like ribbons
+      out.forEach(function(d){
+        var k = Math.min(5, Math.floor(d.ox / r.width * 6));
+        d.d = (1 - d.ox / r.width) * .5 + (d.oy / r.height) * .25 + Math.random() * .25;   // the side nearest the button, and the top, leave first
+        d.lift = 70 + k * 46 + Math.random() * 34; d.side = (k - 2.5) * 54 + (Math.random() - .5) * 30;
+        d.ph = k * 1.1 + Math.random() * .6; d.sw = 8 + Math.random() * 12; d.fr = 1 + k * .12;
+      });
+      return out;
+    }
+    function bez(a, c, b, t){ var u = 1 - t; return u * u * a + 2 * u * t * c + t * t * b; }
+    tasks.push(function(){
+      var r = sheet.getBoundingClientRect(), top0 = small ? 70 : 90, p = clamp((top0 - r.top) / (r.height * .9), 0, 1);
+      if (p <= 0){ if (drops){ cv.classList.remove("on"); g.clearRect(0, 0, cw, ch); sheet.style.opacity = ""; btn.classList.remove("drink"); btn.style.removeProperty("--fill"); } drops = null; landed = false; return; }
+      if (!drops){ size(); sheet.style.animation = "none"; drops = sample(); cv.classList.add("on"); }
+      if (cw !== innerWidth || ch !== innerHeight) size();
+      sheet.style.opacity = String(1 - sm(.02, .3, p));
+      var b = btn.getBoundingClientRect(), ex = b.left + b.width / 2, ey = b.top + b.height / 2, arrived = 0;
+      g.clearRect(0, 0, cw, ch);
+      for (var i = 0; i < drops.length; i++){
+        var d = drops[i], t = clamp((p - .03 - d.d * .4) / .52, 0, 1);
+        var sx = r.left + d.ox, sy = r.top + d.oy;
+        if (t <= 0){
+          // not yet loose: it trembles in place while the card fades around it
+          var a0 = sm(.02, .3, p) * (d.paper ? .5 : 1); if (a0 <= .01) continue;
+          g.globalAlpha = a0; g.fillStyle = d.c; g.fillRect(sx, sy, d.s, d.s); continue;
+        }
+        if (t >= 1){ arrived++; continue; }
+        var cx = sx + (ex - sx) * .3 + d.side, cy = Math.min(sy, ey) - d.lift;
+        function at(tt){ var e = tt < .5 ? 4 * tt * tt * tt : 1 - Math.pow(-2 * tt + 2, 3) / 2, sw = Math.sin(e * Math.PI) * d.sw;
+          return [bez(sx, cx, ex, e) + Math.cos(d.ph + e * 6 * d.fr) * sw, bez(sy, cy, ey, e) + Math.sin(d.ph + e * 4 * d.fr) * sw * .6, e]; }
+        var A = at(t);
+        var al = (d.paper ? .55 : .95) * (t > .82 ? (1 - t) / .18 : 1) * Math.min(1, t * 6);
+        g.globalAlpha = al; g.fillStyle = d.c;   // round droplets, flowing in currents
+        g.beginPath(); g.arc(A[0], A[1], Math.max(.7, d.s * .95 * (1 - A[2] * .55)), 0, 6.283); g.fill();
+      }
+      g.globalAlpha = 1;
+      // the button fills with the ink that reaches it
+      var fill = arrived / drops.length; btn.classList.add("drink"); btn.style.setProperty("--fill", fill.toFixed(3));
+      if (p >= .995){ cv.classList.remove("on"); if (!landed){ landed = true; btn.classList.remove("landed"); void btn.offsetWidth; btn.classList.add("landed"); } }
+      else { cv.classList.add("on"); if (p < .9) landed = false; }
+    });
+    addEventListener("resize", function(){ drops = null; }, {passive: true});
+  })();
+
+  // ---------- 3. a field of real documents to fly through ----------
+  (function(){
+    var sec = document.getElementById("fly"), scene = document.getElementById("flyScene"); if (!sec || !scene) return;
+    var D = [["report", "Report", "Reports that write themselves.", "Cover, contents, charts and page numbers — already done."], ["invoice", "Invoice", "Invoices that add up for you.", "Quantities × prices, tax and totals — always right."],
+      ["cv", "CV", "A CV that stands out.", "Clean, modern and easy to read."], ["plan", "Project plan", "Plans with milestones and owners.", "Phases, risks and dates in one place."],
+      ["letter", "Letter", "Letters on your letterhead.", "Formal, tidy and signed in a click."], ["minutes", "Minutes", "Meeting minutes in minutes.", "Attendees, decisions and actions."],
+      ["proposal", "Proposal", "Proposals that win the work.", "Scope, pricing and terms, beautifully laid out."], ["test", "Test report", "Test reports with PASS / FAIL.", "Environments, cases and results."],
+      ["manual", "User manual", "Manuals people actually read.", "Steps, screenshots and troubleshooting."], ["sop", "SOP", "Step-by-step procedures.", "Numbered, checked and approved."],
+      ["spec", "Specification", "Specifications with sign-off.", "Requirements, verification and revisions."], ["review", "Review record", "Review records, organised.", "Findings, severity and status."],
+      ["checklist", "Checklist", "Checklists you can tick.", "Verification made simple."], ["memo", "Memo", "Memos in seconds.", "Short, clear and on brand."]];
+    if (small) D = D.slice(0, 8);
+    var GAP = small ? 460 : 560, cards = D.map(function(d, i){
+      var el = document.createElement("div"); el.className = "fcard";
+      el.innerHTML = '<img src="img/tpl/' + d[0] + '.webp" alt="" loading="lazy" decoding="async"><b>' + d[1] + "</b>";
+      scene.appendChild(el);
+      var side = i % 2 ? 1 : -1, x = side * (small ? 60 + (i * 37) % 70 : 170 + (i * 97) % 260), y = ((i * 53) % 9 - 4) * (small ? 26 : 46);
+      return {el: el, x: x, y: y, z: -i * GAP, r: side * -(6 + (i * 13) % 10), d: d};
+    });
+    var cap = document.getElementById("flyCap"), T = document.getElementById("flyT"), Pp = document.getElementById("flyP"), shown = 0, mxs = 0, mys = 0, mxt = 0, myt = 0, live = false;
+    if (!small) sec.addEventListener("pointermove", function(e){ mxt = (e.clientX / vw - .5); myt = (e.clientY / vh - .5); ask(); }, {passive: true});
+    new IntersectionObserver(function(es){ live = es[0].isIntersecting; if (live) ask(); }, {rootMargin: "200px 0px"}).observe(sec);
+    tasks.push(function(){
+      if (!live) return;
+      var r = sec.getBoundingClientRect(), span = r.height - vh, p = clamp(-r.top / (span || 1), 0, 1);
+      var cam = p * (cards.length - 1) * GAP + 300;
+      mxs += (mxt - mxs) * .12; mys += (myt - mys) * .12;
+      scene.style.transform = "rotateY(" + (mxs * 8).toFixed(2) + "deg) rotateX(" + (-mys * 6).toFixed(2) + "deg)";
+      var best = null;
+      cards.forEach(function(c, i){
+        var z = c.z + cam, op = z > 360 ? clamp(1 - (z - 360) / 260, 0, 1) : clamp(1 + (z + 2600) / 900, 0, 1);
+        if (op <= 0){ if (c.el.style.opacity !== "0") c.el.style.opacity = "0"; return; }
+        c.el.style.opacity = op.toFixed(3);
+        c.el.style.transform = "translate3d(" + c.x + "px," + c.y + "px," + z.toFixed(1) + "px) rotateY(" + c.r + "deg)";
+        if (z > -GAP * .6 && z < GAP * .5 && (!best || Math.abs(z) < Math.abs(best[1]))) best = [i, z];
+      });
+      if (Math.abs(mxt - mxs) > .002 || Math.abs(myt - mys) > .002) ask();
+      if (best && best[0] !== shown){
+        shown = best[0]; var d = cards[shown].d; cap.classList.add("sw");
+        setTimeout(function(){ T.textContent = d[2]; Pp.textContent = d[3]; cap.classList.remove("sw"); }, 220);
+      }
+    });
+  })();
+
+  // ---------- 4. the essay that fixes itself as you scroll ----------
+  (function(){
+    var sec = document.getElementById("cine"), paper = document.getElementById("cinePaper"); if (!sec || !paper) return;
+    var ers = [].slice.call(paper.querySelectorAll(".er")).map(function(e){ return {el: e, from: e.textContent, to: e.getAttribute("data-to")}; });
+    var cite = document.getElementById("cpCite"), caret = document.getElementById("cpCaret"), bar = document.getElementById("cineBar"), steps = [].slice.call(document.querySelectorAll("#cineSteps li"));
+    var CITE = " (Ghosh 45)", mla = false, live = false;
+    new IntersectionObserver(function(es){ live = es[0].isIntersecting; if (live) ask(); }).observe(sec);
+    function at(el){ var pr = paper.getBoundingClientRect(), r = el.getBoundingClientRect(); caret.style.opacity = "1"; caret.style.transform = "translate3d(" + (r.right - pr.left + 1).toFixed(1) + "px," + (r.top - pr.top + (r.height - 18) / 2).toFixed(1) + "px,0)"; }
+    tasks.push(function(){
+      if (!live) return;
+      var r = sec.getBoundingClientRect(), p = calm ? 1 : clamp(-r.top / ((r.height - vh) || 1), 0, 1);
+      bar.style.transform = "scaleX(" + p.toFixed(3) + ")";
+      var stage = p < .14 ? 0 : p < .58 ? 1 : p < .74 ? 2 : 3;
+      steps.forEach(function(li, i){ li.classList.toggle("on", i === stage); li.classList.toggle("done", i < stage); });
+      // 1: the mistakes are underlined
+      ers.forEach(function(e, i){ e.el.classList.toggle("show", p > .03 + i * .025 && !e.done); });
+      // 2: each one is retyped — delete the wrong letters, type the right ones
+      var caretOn = false;
+      ers.forEach(function(e, i){
+        var a = .16 + i * .1, b = a + .085, q = clamp((p - a) / (b - a), 0, 1), n = e.from.length + e.to.length, k = Math.round(q * n);
+        var txt = q <= 0 ? e.from : k <= e.from.length ? e.from.slice(0, e.from.length - k) : e.to.slice(0, k - e.from.length);
+        if (e.el.textContent !== txt) e.el.textContent = txt || "​";
+        var done = q >= 1; if (done !== !!e.done){ e.done = done; e.el.classList.toggle("fixed", done); if (done) setTimeout(function(){ e.el.classList.add("old"); }, 900); else e.el.classList.remove("old"); }
+        if (q > 0 && q < 1){ at(e.el); caretOn = true; }
+      });
+      // 3: the citation is typed in
+      var cq = clamp((p - .6) / .1, 0, 1), ct = CITE.slice(0, Math.round(cq * CITE.length));
+      if (cite.textContent !== ct) cite.textContent = ct;
+      if (cq > 0 && cq < 1){ at(cite); caretOn = true; }
+      if (!caretOn) caret.style.opacity = "0";
+      // 4: the page becomes an MLA paper
+      var m = p > .76;
+      if (m !== mla){ mla = m; paper.classList.add("flash"); setTimeout(function(){ paper.classList.toggle("mla", mla); paper.classList.remove("flash"); }, 200); }
+      var f = sm(.76, .92, p); paper.style.setProperty("--lh", (1.55 + f * (small ? .3 : .55)).toFixed(3)); paper.style.setProperty("--ind", (f * 28).toFixed(1) + "px");
+    });
+  })();
+
+  // ---------- 5. light passing through the glass ----------
+  (function(){
+    if (calm || small || matchMedia("(pointer: coarse)").matches) return;   // phones keep their frames for scrolling (like the site's other decorative motion)
+    var els = [].slice.call(document.querySelectorAll(".nav, .pill, .gtabs, .made .mcard, .stats .stat, .bento .card, .tabs"));
+    els.forEach(function(el){
+      if (getComputedStyle(el).position === "static") el.style.position = "relative";
+      var r = el.getBoundingClientRect(), g = document.createElement("i"); g.className = "gbx"; g.setAttribute("aria-hidden", "true"); g.innerHTML = "<b></b>";
+      g.firstChild.style.setProperty("--bd", ((r.left + r.width / 2) / innerWidth * 1.1 + (el.classList.contains("nav") ? 0 : .6)).toFixed(2) + "s");
+      el.appendChild(g);
+    });
+  })();
+
+  ask();
 })();
 </script>
 </body>
