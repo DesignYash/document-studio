@@ -989,9 +989,17 @@ sup.cite{font-size:.7em; vertical-align:super; line-height:0;}
 /* ===================== high-level motion ===================== */
 /* ink-particle wordmark */
 .inkword{position:relative; height:76px; margin:14px 0 2px; pointer-events:auto;}
-.inkword canvas{position:absolute; left:50%; top:0; transform:translateX(-50%); height:76px; display:block; cursor:crosshair;}
+.inkword canvas{position:absolute; left:50%; top:0; transform:translateX(-50%); height:76px; display:block; cursor:default;}
 @media (max-width:760px){ .inkword{height:52px;} .inkword canvas{height:52px;} }
-/* the hero card dissolves into ink that streams into "Get it" */
+/* the hero card turns to dust and drifts away on the wind, towards "Get it" */
+.snap{position:absolute; pointer-events:none; z-index:2;}
+.snap-l, .snap-sh{position:absolute; inset:0; will-change:transform, opacity; transform-origin:30% 60%;}
+.snap-sh{border-radius:26px; box-shadow:0 2px 6px rgba(15,31,25,.05), 0 40px 90px rgba(15,31,25,.12);}
+.snap-l{-webkit-mask-size:100% 100%; mask-size:100% 100%; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;}
+.snap-l > .sheet{position:absolute !important; left:0; top:0; margin:0 !important; max-width:none !important; transform:none !important; animation:none !important; opacity:1 !important; box-shadow:none !important; visibility:visible !important;}
+.snap *, .snap *::before, .snap *::after{animation:none !important; transition:none !important;}
+.snap .rv, .snap h1 .ch{opacity:1 !important; translate:none !important; clip-path:none !important;}
+@media (max-width:760px){ .snap-sh{border-radius:20px;} }
 .inkstream{position:fixed; left:0; top:0; width:100vw; height:100vh; z-index:45; pointer-events:none; display:none;}
 .inkstream.on{display:block;}
 .nav [data-get].drink{box-shadow:0 0 0 calc(var(--fill, 0) * 6px) rgb(var(--a-rgb) / calc(var(--fill, 0) * .22)), 0 10px 26px rgb(var(--a-rgb) / calc(.3 + var(--fill, 0) * .3));}
@@ -1057,6 +1065,9 @@ sup.cite{font-size:.7em; vertical-align:super; line-height:0;}
   animation:gbeam 8s cubic-bezier(.45,.05,.35,1) infinite; animation-delay:var(--bd, 0s); will-change:transform;}
 @keyframes gbeam{0%{transform:translate3d(-140%,0,0) skewX(-20deg);} 24%, 100%{transform:translate3d(380%,0,0) skewX(-20deg);}}
 @media (prefers-reduced-motion: reduce){ .gbx{display:none;} .fly{height:auto;} .fly-stick{position:relative; height:70vh;} .cine{height:auto;} .cine-stick{position:relative; height:auto; padding:40px 0;} }
+
+/* dust: one small canvas for the brief bursts (typo, essay, store badge); it only runs while dust is in the air */
+.dustfx{position:fixed; left:0; top:0; width:100vw; height:100vh; pointer-events:none; z-index:70;}
 </style>
 <script>try{ if (!matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("intro-on"); }catch(e){}</script>
 </head>
@@ -2084,7 +2095,7 @@ sup.cite{font-size:.7em; vertical-align:super; line-height:0;}
   }
   document.addEventListener("click", function(e){
     var a = e.target.closest("[data-store], [data-get]"); if (!a) return;
-    var r = a.getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2);
+    var r = a.getBoundingClientRect(); if (window.__dust) window.__dust.badge(r); else burst(r.left + r.width / 2, r.top + r.height / 2);
     thanks.classList.add("show"); clearTimeout(tTimer); tTimer = setTimeout(function(){ thanks.classList.remove("show"); }, 4200);
   });
 })();
@@ -2211,74 +2222,105 @@ sup.cite{font-size:.7em; vertical-align:super; line-height:0;}
     cv.addEventListener("pointerleave", function(){ mx = my = -1e4; if (!calm) start(); });
   })();
 
-  // ---------- 2. the hero card dissolves into ink that streams into "Get it" ----------
+  // ---------- 2. the hero card turns to dust and drifts away on the wind, towards "Get it" ----------
+  // The card is split into a few layers, each holding a random scattering of its grains (a mask over a copy of the real card).
+  // The layers drift off one after another, nearest the button first. Once built, nothing is redrawn:
+  // the graphics card only moves and fades the layers, so it stays smooth. The motion glides after the scroll.
   (function(){
     var sheet = document.getElementById("sheet"), btn = document.querySelector(".nav [data-get]");
-    if (!sheet || !btn || calm) return;
-    var cv = document.createElement("canvas"), g = cv.getContext("2d"), dpr = Math.min(2, devicePixelRatio || 1);
-    cv.className = "inkstream"; cv.setAttribute("aria-hidden", "true"); document.body.appendChild(cv);
-    var drops = null, landed = false, cw = 0, ch = 0;
-    function size(){ cw = innerWidth; ch = innerHeight; cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr); g.setTransform(dpr, 0, 0, dpr, 0, 0); }
-    function rgb(c){ var m = /rgba?\(([^)]+)\)/.exec(c || ""); if (!m) return null; var v = m[1].split(",").map(parseFloat); return v.length > 3 && v[3] < .1 ? null : "rgb(" + Math.round(v[0]) + "," + Math.round(v[1]) + "," + Math.round(v[2]) + ")"; }
-    // where the ink is: every line of text in the card (its own colour), plus a light dusting of paper
-    function sample(){
-      var r = sheet.getBoundingClientRect(), out = [], max = small ? 650 : 1700, cs = getComputedStyle(document.documentElement);
-      var acc = "rgb(" + (cs.getPropertyValue("--a-rgb").trim() || "14 165 233").split(/\s+/).join(",") + ")", deep = cs.getPropertyValue("--accent-deep").trim() || "#2563EB";
-      var tw = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT, {acceptNode: function(n){ return n.textContent.trim() ? 1 : 3; }}), n, boxes = [];
-      while ((n = tw.nextNode())){
-        var el = n.parentElement; if (!el || el.closest(".fold")) continue;
-        var col = rgb(getComputedStyle(el).color) || (Math.random() < .5 ? acc : deep), rg = document.createRange(); rg.selectNodeContents(n);
-        [].forEach.call(rg.getClientRects(), function(b){ if (b.width > 2 && b.height > 2) boxes.push([b, col]); });
+    if (!sheet || !btn || calm || !("maskImage" in document.body.style || "webkitMaskImage" in document.body.style)) return;
+    var N = small ? 4 : 10, wrap = null, shadow = null, layers = [], W = 0, H = 0, want = 0, cur = 0, loop = 0, last = 0, landed = false, shown = false, geoTop = 0;
+    function rnd(seed){ return function(){ seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
+    // which layer each grain belongs to: the right-hand side (nearest the button) goes first, with a ragged, random edge
+    // which layer each grain belongs to: a wave sweeping from the right (nearest the button), with a ragged, random edge.
+    // Drawn at the screen's own resolution, so every pixel belongs to exactly one layer and, at rest, the layers rebuild the card exactly.
+    // Each layer is only as wide as its band of grains, so the graphics card paints little more than one card's worth.
+    function masks(){
+      var DP = 1, Wd = Math.round(W * DP), Hd = Math.round(H * DP), B = 2;   // page pixels: exact on standard screens, light on the graphics card
+      var w = Math.ceil(Wd / B), h = Math.ceil(Hd / B), R = rnd(7), as = new Uint8Array(w * h), lo = [], hi = [];
+      for (var k = 0; k < N; k++){ lo.push(w); hi.push(-1); }
+      for (var y = 0; y < h; y++) for (var x = 0; x < w; x++){
+        var f = (1 - x / w) * .7 + (y / h) * .04 + R() * .26, k2 = Math.min(N - 1, Math.max(0, Math.floor(f * N)));
+        as[y * w + x] = k2; if (x < lo[k2]) lo[k2] = x; if (x > hi[k2]) hi[k2] = x;
       }
-      var ic = sheet.querySelector("#inkword canvas"); if (ic){ var ib = ic.getBoundingClientRect(); boxes.push([{left: ib.left + ib.width * .12, top: ib.top + ib.height * .2, width: ib.width * .76, height: ib.height * .6}, acc]); }
-      var area = boxes.reduce(function(t, x){ return t + x[0].width * x[0].height; }, 0) || 1, textN = Math.round(max * .78);
-      boxes.forEach(function(x){
-        var b = x[0], k = Math.max(1, Math.round(textN * b.width * b.height / area));
-        for (var i = 0; i < k; i++) out.push({ox: b.left - r.left + Math.random() * b.width, oy: b.top - r.top + b.height * (.2 + Math.random() * .62), c: x[1], s: .9 + Math.random() * 1.5});
-      });
-      for (var j = 0; j < max - textN; j++) out.push({ox: Math.random() * r.width, oy: Math.random() * r.height, c: Math.random() < .7 ? "rgb(196,222,246)" : "rgb(150,200,240)", s: 1.2 + Math.random() * 2.2, paper: 1});
-      // the ink travels in six currents that sweep up together, like ribbons
-      out.forEach(function(d){
-        var k = Math.min(5, Math.floor(d.ox / r.width * 6));
-        d.d = (1 - d.ox / r.width) * .5 + (d.oy / r.height) * .25 + Math.random() * .25;   // the side nearest the button, and the top, leave first
-        d.lift = 70 + k * 46 + Math.random() * 34; d.side = (k - 2.5) * 54 + (Math.random() - .5) * 30;
-        d.ph = k * 1.1 + Math.random() * .6; d.sw = 8 + Math.random() * 12; d.fr = 1 + k * .12;
-      });
+      var out = [];
+      for (var k3 = 0; k3 < N; k3++){
+        if (hi[k3] < 0){ out.push(null); continue; }
+        var x0 = lo[k3] * B, bw = Math.min(Wd, (hi[k3] + 1) * B) - x0, c = document.createElement("canvas"); c.width = bw; c.height = Hd;
+        var cx = c.getContext("2d"), im = cx.createImageData(bw, Hd), dd = im.data;
+        for (var yy = 0; yy < Hd; yy++){ var row = ((yy / B) | 0) * w; for (var xx = 0; xx < bw; xx++) if (as[row + (((x0 + xx) / B) | 0)] === k3) dd[(yy * bw + xx) * 4 + 3] = 255; }
+        cx.putImageData(im, 0, 0);
+        out.push({url: c.toDataURL("image/png"), x: x0 / DP, w: bw / DP});
+      }
       return out;
     }
-    function bez(a, c, b, t){ var u = 1 - t; return u * u * a + 2 * u * t * c + t * t * b; }
-    tasks.push(function(){
-      var r = sheet.getBoundingClientRect(), top0 = small ? 70 : 90, p = clamp((top0 - r.top) / (r.height * .9), 0, 1);
-      if (p <= 0){ if (drops){ cv.classList.remove("on"); g.clearRect(0, 0, cw, ch); sheet.style.opacity = ""; btn.classList.remove("drink"); btn.style.removeProperty("--fill"); } drops = null; landed = false; return; }
-      if (!drops){ size(); sheet.style.animation = "none"; drops = sample(); cv.classList.add("on"); }
-      if (cw !== innerWidth || ch !== innerHeight) size();
-      sheet.style.opacity = String(1 - sm(.02, .3, p));
-      var b = btn.getBoundingClientRect(), ex = b.left + b.width / 2, ey = b.top + b.height / 2, arrived = 0;
-      g.clearRect(0, 0, cw, ch);
-      for (var i = 0; i < drops.length; i++){
-        var d = drops[i], t = clamp((p - .03 - d.d * .4) / .52, 0, 1);
-        var sx = r.left + d.ox, sy = r.top + d.oy;
-        if (t <= 0){
-          // not yet loose: it trembles in place while the card fades around it
-          var a0 = sm(.02, .3, p) * (d.paper ? .5 : 1); if (a0 <= .01) continue;
-          g.globalAlpha = a0; g.fillStyle = d.c; g.fillRect(sx, sy, d.s, d.s); continue;
-        }
-        if (t >= 1){ arrived++; continue; }
-        var cx = sx + (ex - sx) * .3 + d.side, cy = Math.min(sy, ey) - d.lift;
-        function at(tt){ var e = tt < .5 ? 4 * tt * tt * tt : 1 - Math.pow(-2 * tt + 2, 3) / 2, sw = Math.sin(e * Math.PI) * d.sw;
-          return [bez(sx, cx, ex, e) + Math.cos(d.ph + e * 6 * d.fr) * sw, bez(sy, cy, ey, e) + Math.sin(d.ph + e * 4 * d.fr) * sw * .6, e]; }
-        var A = at(t);
-        var al = (d.paper ? .55 : .95) * (t > .82 ? (1 - t) / .18 : 1) * Math.min(1, t * 6);
-        g.globalAlpha = al; g.fillStyle = d.c;   // round droplets, flowing in currents
-        g.beginPath(); g.arc(A[0], A[1], Math.max(.7, d.s * .95 * (1 - A[2] * .55)), 0, 6.283); g.fill();
+    function build(){
+      W = sheet.offsetWidth; H = sheet.offsetHeight; if (!W || !H) return false;
+      var ms = masks(), host = sheet.offsetParent || document.body, R = rnd(11);
+      wrap = document.createElement("div"); wrap.className = "snap"; wrap.setAttribute("aria-hidden", "true");
+      wrap.style.cssText = "left:" + sheet.offsetLeft + "px; top:" + sheet.offsetTop + "px; width:" + W + "px; height:" + H + "px; opacity:.002;";   // drawn and ready, all but invisible
+      shadow = document.createElement("div"); shadow.className = "snap-sh"; wrap.appendChild(shadow);
+      var src = sheet.querySelector("#inkword canvas");
+      for (var k = 0; k < N; k++){
+        var m = ms[k]; if (!m) continue;
+        var L = document.createElement("div"); L.className = "snap-l";
+        L.style.left = m.x + "px"; L.style.width = m.w + "px"; L.style.right = "auto"; L.style.overflow = "hidden";
+        L.style.webkitMaskImage = L.style.maskImage = "url(" + m.url + ")";
+        var cl = sheet.cloneNode(true); cl.removeAttribute("id"); cl.querySelectorAll("[id]").forEach(function(x){ x.removeAttribute("id"); });
+        cl.style.width = W + "px"; cl.style.height = H + "px"; cl.style.left = (-m.x) + "px";
+        var dst = cl.querySelector(".inkword canvas"); if (src && dst){ dst.width = src.width; dst.height = src.height; try{ dst.getContext("2d").drawImage(src, 0, 0); }catch(e){} }
+        L.appendChild(cl); wrap.appendChild(L);
+        var spread = small ? .6 : 1;
+        layers.push({el: L, delay: .02 + (k / N) * .56, dx: (120 + R() * 240) * spread, dy: -(60 + R() * 160) * spread, rot: (R() - .5) * 14, sc: .96 + R() * .08, gone: false});
       }
-      g.globalAlpha = 1;
-      // the button fills with the ink that reaches it
-      var fill = arrived / drops.length; btn.classList.add("drink"); btn.style.setProperty("--fill", fill.toFixed(3));
-      if (p >= .995){ cv.classList.remove("on"); if (!landed){ landed = true; btn.classList.remove("landed"); void btn.offsetWidth; btn.classList.add("landed"); } }
-      else { cv.classList.add("on"); if (p < .9) landed = false; }
+      host.appendChild(wrap);
+      return true;
+    }
+    function syncWord(){   // the headline's changing word is copied across, so the dust is always the card you see
+      var rw = sheet.querySelector("#rot"); if (!rw) return;
+      var html = rw.innerHTML; wrap.querySelectorAll(".rot").forEach(function(x){ if (x.innerHTML !== html) x.innerHTML = html; });
+      var src = sheet.querySelector("#inkword canvas");   // and the drawn wordmark, as it looks right now
+      if (src) wrap.querySelectorAll(".inkword canvas").forEach(function(d){ if (d.width !== src.width || d.height !== src.height){ d.width = src.width; d.height = src.height; } var c = d.getContext("2d"); c.clearRect(0, 0, d.width, d.height); try{ c.drawImage(src, 0, 0); }catch(e){} });
+    }
+    function show(on){
+      if (on === shown) return; shown = on;
+      if (on){ if (!wrap.__fresh) syncWord(); wrap.style.opacity = "1"; sheet.style.visibility = "hidden"; }
+      else { wrap.style.opacity = ".002"; sheet.style.visibility = ""; btn.classList.remove("drink"); btn.style.removeProperty("--fill"); }
+    }
+    function apply(){
+      for (var k = 0; k < layers.length; k++){
+        var L = layers[k], t = clamp((cur - L.delay) / .42, 0, 1), e = t * t * (3 - 2 * t) * .2 + t * t * .8;   // eases away like dust caught by the wind
+
+        L.el.style.transform = t ? "translate3d(" + (L.dx * e).toFixed(1) + "px," + (L.dy * e).toFixed(1) + "px,0)" : "";   // movement only: the layer's picture is reused, never redrawn
+        L.el.style.opacity = t ? Math.pow(1 - t, 1.7).toFixed(3) : "";   // fades before it travels far: dust, never a ghost of the text
+      }
+      shadow.style.opacity = (1 - sm(0, .45, cur)).toFixed(3);
+      btn.classList.add("drink"); btn.style.setProperty("--fill", sm(.45, 1, cur).toFixed(3));
+      if (cur >= .995){ if (!landed){ landed = true; btn.classList.remove("landed"); void btn.offsetWidth; btn.classList.add("landed"); } }
+      else if (cur < .9) landed = false;
+    }
+    function frame(now){
+      loop = 0;
+      var dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
+      cur += (want - cur) * (1 - Math.exp(-dt * 3.4));   // glides after the scroll, so a wheel notch never makes it jump
+      if (Math.abs(want - cur) < .0008) cur = want;
+      if (cur <= 0 && want <= 0){ show(false); last = 0; return; }
+      if (cur <= 0){ loop = requestAnimationFrame(frame); return; }   // the first frame has no time in it yet: keep going
+      if (!wrap && !build()) return;
+      show(true); apply();
+      if (cur !== want) loop = requestAnimationFrame(frame); else last = 0;
+    }
+    tasks.push(function(){
+      if (wrap && !shown && scrollY > 4 && !wrap.__fresh){ wrap.__fresh = true; syncWord(); }   // first touch of the scroll: bring the copy up to date while it is still invisible
+      if (scrollY <= 4 && wrap) wrap.__fresh = false;
+      var top0 = small ? 70 : 90, rt, rh;
+      if (wrap){ rt = geoTop - scrollY; rh = H; } else { var r = sheet.getBoundingClientRect(); rt = r.top; rh = r.height; geoTop = r.top + scrollY; }
+      want = clamp((top0 - rt) / (rh * .9), 0, 1);
+      if (!loop && (want > 0 || cur > 0)) loop = requestAnimationFrame(frame);
     });
-    addEventListener("resize", function(){ drops = null; }, {passive: true});
+    // the layers are prepared while the page is idle, so the first scroll starts at once
+    (window.requestIdleCallback || function(f){ setTimeout(f, 1200); })(function(){ if (!wrap){ var r = sheet.getBoundingClientRect(); geoTop = r.top + scrollY; build(); } }, {timeout: 3000});
+    addEventListener("resize", function(){ if (wrap){ wrap.remove(); wrap = null; layers = []; shown = false; sheet.style.visibility = ""; } }, {passive: true});
   })();
 
   // ---------- 3. a field of real documents to fly through ----------
@@ -2343,8 +2385,10 @@ sup.cite{font-size:.7em; vertical-align:super; line-height:0;}
       // 2: each one is retyped — delete the wrong letters, type the right ones
       var caretOn = false;
       ers.forEach(function(e, i){
-        var a = .16 + i * .1, b = a + .085, q = clamp((p - a) / (b - a), 0, 1), n = e.from.length + e.to.length, k = Math.round(q * n);
-        var txt = q <= 0 ? e.from : k <= e.from.length ? e.from.slice(0, e.from.length - k) : e.to.slice(0, k - e.from.length);
+        var a = .16 + i * .1, b = a + .085, q = clamp((p - a) / (b - a), 0, 1), k = Math.round(q * e.to.length);
+        if (q > 0 && !e.dusted){ e.dusted = true; if (window.__dust) window.__dust.word(e.el, e.from, {wx: 60, wy: -50}); }   // the wrong word crumbles away
+        if (q <= 0) e.dusted = false;
+        var txt = q <= 0 ? e.from : e.to.slice(0, Math.max(0, k));
         if (e.el.textContent !== txt) e.el.textContent = txt || "​";
         var done = q >= 1; if (done !== !!e.done){ e.done = done; e.el.classList.toggle("fixed", done); if (done) setTimeout(function(){ e.el.classList.add("old"); }, 900); else e.el.classList.remove("old"); }
         if (q > 0 && q < 1){ at(e.el); caretOn = true; }
@@ -2374,6 +2418,76 @@ sup.cite{font-size:.7em; vertical-align:super; line-height:0;}
   })();
 
   ask();
+})();
+
+/* dust, in three small places: the typo in the PDF demo, the essay's misspelled words, and the store badge */
+(function(){
+  var calm = matchMedia("(prefers-reduced-motion: reduce)").matches, small = matchMedia("(max-width:760px)").matches; if (calm) return;
+  var cv = null, g = null, parts = [], raf = 0, last = 0, dpr = Math.min(2, devicePixelRatio || 1);
+  function ensure(){
+    if (!cv){ cv = document.createElement("canvas"); cv.className = "dustfx"; cv.setAttribute("aria-hidden", "true"); document.body.appendChild(cv); g = cv.getContext("2d"); }
+    var W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr); if (cv.width !== W || cv.height !== H){ cv.width = W; cv.height = H; g.setTransform(dpr, 0, 0, dpr, 0, 0); }
+  }
+  // each grain: a speck of the real thing, lifted by a slow wind, wandering a little, fading out (all timed in seconds)
+  function step(now){
+    var dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
+    g.clearRect(0, 0, innerWidth, innerHeight);
+    var keep = [];
+    for (var i = 0; i < parts.length; i++){
+      var p = parts[i]; p.age += dt; if (p.age < 0){ keep.push(p); continue; }
+      var t = p.age / p.life; if (t >= 1) continue;
+      p.vx += (p.wx + Math.sin(p.age * 2.3 + p.ph) * 14) * dt; p.vy += (p.wy + Math.cos(p.age * 1.9 + p.ph) * 10) * dt;
+      p.vx *= 1 - dt * .6; p.vy *= 1 - dt * .6; p.x += p.vx * dt; p.y += p.vy * dt;
+      g.globalAlpha = Math.pow(1 - t, 1.4) * p.a; g.fillStyle = p.c; var sz = p.s * (1 - t * .45); g.fillRect(p.x - sz / 2, p.y - sz / 2, sz, sz);
+      keep.push(p);
+    }
+    g.globalAlpha = 1; parts = keep;
+    if (parts.length) raf = requestAnimationFrame(step); else { raf = 0; last = 0; g.clearRect(0, 0, innerWidth, innerHeight); }
+  }
+  function add(list){ if (!list.length) return; ensure(); parts = parts.concat(list); if (!raf) raf = requestAnimationFrame(step); }
+  function grain(x, y, c, o){
+    o = o || {};
+    return {x: x, y: y, c: c, s: o.s || (1.2 + Math.random() * 1.6), a: o.a || 1, age: -(o.delay || 0) * Math.random(), life: (o.life || 1.3) * (.7 + Math.random() * .6),
+      vx: (o.vx || 0) + (Math.random() - .5) * 30, vy: (o.vy || 0) + (Math.random() - .5) * 24, wx: o.wx == null ? 70 : o.wx, wy: o.wy == null ? -55 : o.wy, ph: Math.random() * 6.283};
+  }
+  // a word, as dust: its letters are drawn off-screen in the same font and colour, and every inked pixel becomes a grain
+  function word(el, text, o){
+    var r = el.getBoundingClientRect(); if (!r.width || r.bottom < 0 || r.top > innerHeight) return;
+    var cs = getComputedStyle(el), k = 2, W = Math.ceil(r.width) + 8, H = Math.ceil(r.height) + 8, c = document.createElement("canvas"); c.width = W * k; c.height = H * k;
+    var x = c.getContext("2d"); x.scale(k, k); x.font = cs.fontStyle + " " + cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily; x.textBaseline = "middle"; x.fillStyle = cs.color;
+    x.fillText(text, 2, H / 2 - 2);
+    var d = x.getImageData(0, 0, W * k, H * k).data, out = [], st = small ? 3 : 2;
+    for (var yy = 0; yy < H * k; yy += st) for (var xx = 0; xx < W * k; xx += st){ var q = (yy * W * k + xx) * 4; if (d[q + 3] > 110)
+      out.push(grain(r.left + xx / k - 2, r.top + yy / k - (H - r.height) / 2 + 1, "rgb(" + d[q] + "," + d[q + 1] + "," + d[q + 2] + ")", Object.assign({delay: .25, s: 1.4 + Math.random() * 1.2}, o))); }
+    add(out);
+  }
+  // the store badge: a soft cloud of dark and light specks drifts up off it
+  function badge(r){
+    var cs = getComputedStyle(document.documentElement), acc = "rgb(" + (cs.getPropertyValue("--a-rgb").trim() || "14 165 233").split(/\s+/).join(",") + ")";
+    var cols = ["#0b0b0b", "#1f2937", "#ffffff", "#cbd5e1", acc, acc], out = [], n = small ? 160 : 320;
+    for (var i = 0; i < n; i++){
+      var x = r.left + Math.random() * r.width, y = r.top + Math.random() * r.height, dx = (x - (r.left + r.width / 2)) / r.width;
+      out.push(grain(x, y, cols[i % cols.length], {delay: .15, life: 1.6, vx: dx * 80, vy: -20 - Math.random() * 40, wx: dx * 30 + 20, wy: -60, s: 1.4 + Math.random() * 2}));
+    }
+    add(out);
+  }
+  window.__dust = {word: word, badge: badge};
+
+  // ---- the typo in the PDF demo crumbles away under the handle as it slides over it ----
+  (function(){
+    var ba = document.getElementById("ba"); if (!ba) return;
+    // the misspelled title's pixels, worked out in advance from the two pictures (so it works anywhere, even opened as a file)
+    var T = {"w": 1100, "h": 681, "p": "92,200,7d7f81;92,218,adafaf;94,220,404241;96,222,434547;98,194,606264;98,202,9fa1a3;98,216,646667;100,218,929699;100,224,2e3032;102,198,676b6e;102,224,121416;104,192,9ea0a2;104,220,6d6f71;106,192,8e9394;106,214,989c9b;106,218,6b7071;106,220,6d6f71;108,192,b5b9bc;108,198,b0b4b7;108,220,404243;110,198,272b2e;110,216,6b7071;110,224,1e2021;112,200,66686a;112,224,666a6b;114,194,b4b6b8;114,214,525659;114,224,202425;116,196,646667;116,226,7a7c7d;118,198,8b8d8f;118,218,444849;120,204,4f5152;120,222,adb1b2;120,226,393b3c;126,220,aaacad;130,224,242627;132,218,868a8d;134,220,b9bdc1;136,224,131517;138,220,828689;138,224,848688;140,218,898d8e;140,222,595d60;142,224,1f1f21;144,224,181a1c;146,224,333536;152,208,c5cac8;152,216,848987;152,222,bbbdbf;154,204,717676;154,208,64696a;154,214,393d41;154,224,9ea0a2;156,202,999d9e;156,208,303435;156,224,191b1d;158,206,262a2d;158,212,6e7275;158,216,2a2e31;158,220,424649;160,216,9b9fa2;162,224,1e2021;164,206,9c9da1;164,220,5a5e61;164,224,c0c2c3;166,222,565b5e;168,202,646667;168,224,101213;170,204,3d3f41;170,224,121416;172,224,303234;178,224,1f2123;180,224,151517;182,224,0f0f11;188,206,161819;192,204,b4b6b8;194,206,57595b;196,222,67696b;198,224,27292b;200,194,a0a0a0;202,206,53575a;202,220,aeb0b2;204,206,565b5e;204,224,141414;210,202,2d3132;210,204,2f3135;210,220,333536;210,222,36383a;210,224,252728;212,202,151a1a;212,224,141919;214,208,222828;214,210,1e2525;214,216,1b2524;214,224,121715;216,204,494d50;216,206,24282c;216,208,292d2e;216,210,a0a4a5;218,206,181c1d;220,206,0e1313;222,206,262a2b;224,202,a9aeae;226,208,888a8b;226,210,47494a;226,214,252728;226,216,444648;226,218,7c7e80;228,204,afb3b6;228,206,1b1f22;228,214,1f2123;228,216,232526;228,220,232526;228,222,919395;230,204,191d20;230,206,222629;230,208,212325;230,210,1f2123;230,212,212325;230,214,202224;230,216,1a1c1e;230,218,212325;230,220,202224;230,222,202224;230,224,c4c4c4;232,202,272b2c;232,204,262a2d;232,206,212528;232,208,929496;232,212,121416;232,214,111315;232,218,999b9d;232,220,1e2021;232,222,202224;232,224,232323;234,202,161b1c;234,204,202427;234,212,161819;234,214,131517;234,222,1d1f20;234,224,1d1d1d;236,224,1e1e1e;238,206,868a8d;238,220,b5b7b9;238,224,1f1f1f;240,202,444849;240,208,878b8f;240,212,1c2023;240,214,121619;240,218,939798;240,220,212325;240,222,242627;240,224,252726;242,208,212528;242,210,1a1e21;242,212,1c2023;242,214,13171a;242,218,535758;242,220,2b2d2e;242,222,202224;242,224,abadac;244,206,272b2e;244,208,1d2125;244,210,1f2326;244,212,21252a;244,214,0e1216;244,218,727778;244,220,1f2123;244,222,838587;246,208,c6c8c9;246,210,727475;246,212,494b4d;246,214,37393b;246,218,bdc0bf;252,224,3e4042;254,224,161819;256,224,0b0d0f;262,202,282a2c;262,204,959798;264,208,454749;264,210,b8babb;264,234,aaaaaa;266,214,656768;266,234,787a79;268,204,757779;268,220,909497;268,228,a3a5a6;268,234,999b9d;270,210,737375;270,224,494d50;272,216,74787b;272,232,4f5054;302,224,111516;304,224,15161a;306,224,0b0d0f;308,198,616566;308,212,323339;310,198,616566;310,212,3c4043;312,198,636868;312,212,3c4041;314,198,595d60;314,212,3f4444;316,198,2c2d31;316,212,666a6b;318,200,8a8c90;318,212,a4a9aa;320,194,444648;322,210,929496;324,198,4c4e50;324,208,b8babb;330,202,a3a5a6;330,204,a7a9ab;330,206,a7a9ab;330,208,a7a9ab;330,210,a8aaac;330,212,a7a9ad;330,214,a6aaad;330,216,a7abae;330,218,a5acae;330,220,a7abae;330,222,a7abae;330,224,a3a4a8;332,224,111315;334,224,181a1c;336,204,717676;336,212,555758;336,218,636868;336,224,595c5b;338,202,8a8e8f;338,208,bfc1c2;340,206,111317;342,206,15161a;344,202,3c3e40;348,218,292b2f;348,220,999b9f;350,204,6e7273;350,222,595d60;352,202,c4c6c8;352,212,555c5c;352,214,4e5555;352,216,373d3d;352,224,adafb1;354,224,282a2c;356,206,939798;356,220,b2b4b5;356,224,17191a;360,206,9c9e9f;360,220,b3b5b6;362,206,1c2121;362,224,1f2121;364,202,b2b4b5;364,210,3f4444;364,212,666a6b;364,214,666a6b;364,224,a1a4a3;366,204,616566;366,222,575958;368,206,8a8c8e;370,212,a3a3a5;370,214,a9a8ab;370,230,adafb1;372,234,989a9c;374,228,717276;374,234,7e8182;376,198,5f6163;376,234,bdbfc1;378,198,636868;380,196,3d3f41;380,198,797b7c;380,202,333536;380,204,3e4042;380,206,404243;380,208,3e4243;380,210,3e4243;380,212,3d4142;380,214,3d4144;380,216,3d4144;380,218,3f4346;380,220,3f4346;380,222,3e4245;380,226,44464a;380,228,555758;386,216,494d50;386,218,8b8f92;388,222,a6a8aa;392,202,323435;392,214,121418;392,218,8a8c90;392,224,26282a;394,206,787d7d;394,214,121418;394,220,7d8182;396,214,15161a;398,206,929697;398,214,121418;398,220,c3c7c8;400,202,3c413f;400,208,95969a;400,214,121418;400,224,1d1f1e;402,214,111317;402,218,4e5051;402,224,a5a7a7;404,214,111317;404,218,828486;404,222,787a7b;406,208,b6b8ba;406,210,636566;406,212,3e4044;406,218,aeb0b2;412,218,282a2c;412,220,808283;414,204,434547;414,222,37393b;416,202,929496;416,212,4b4d51;416,214,44464a;416,224,7a7c7d;418,224,121416;420,206,c2c6c9;420,220,c6c8c9;424,206,6b6f73;424,220,8c8e90;426,202,3c4041;426,208,484a4b;426,224,323435;428,208,181a1c;430,208,101213;434,202,909495;434,204,949999;434,206,adb1b2;436,206,565b5c;438,196,c7c7c9;440,224,1c1e1f;442,194,7b7b7b;444,206,5d5f60;446,206,555756;446,220,c4c6c8;446,224,0a0c0c;464,194,3a3c3d;464,196,414344;464,198,414344;464,200,414344;464,202,414344;464,204,414344;464,206,414344;464,208,414344;464,210,414344;464,212,4b4d4f;464,214,5e6061;464,216,7c7e80;464,218,acaeb0;466,220,202224;466,222,c0c2c3;470,194,adafb1;470,196,b1b3b4;470,198,b1b3b4;470,200,b1b3b4;470,202,b1b3b4;470,204,b1b3b4;470,206,b1b3b4;470,208,b1b3b4;470,210,b1b3b4;470,212,afb1b3;470,214,9ea0a2;470,216,6b6d6e;470,224,454749;472,224,191b1d;474,220,53575c;476,220,707479;478,220,63676d;482,224,343638;484,224,c6c6c8;486,222,7d7f81;488,214,343638;488,218,7d7f81;496,202,37393b;502,204,5f6366;502,216,b2b3b7;502,218,424649;502,222,3c4043;504,202,919596;504,206,55595d;504,220,515558;504,224,7d8182;506,224,131718;508,206,bdbfc1;510,206,212325;512,202,494b4d;512,210,424446;512,212,67696b;512,224,404241;516,206,585a5c;518,212,b8bcbf;518,214,b8bcbf;522,210,404448;522,212,34383b;522,214,393d41;522,216,494d4e;522,218,898d8e;524,222,9ba0a0;526,202,a9aeac;526,224,b5b8b7;528,218,616367;528,224,202224;530,206,606465;530,220,6d7172;534,206,b7bbbe;534,224,242627;536,206,222629;538,194,57595b;538,196,5f6364;538,198,5f6364;538,200,595d60;538,202,5f6366;538,210,3c4041;538,212,5b6060;538,214,5b6060;538,222,717676;538,224,9d9fa0;540,224,181a1c;542,224,111315;544,194,bbbbbb;544,196,c2c4c6;544,198,c2c4c6;544,200,c2c4c6;544,202,c3c5c7;544,204,c1c3c4;544,206,c1c3c4;544,208,c2c4c6;544,210,bfc1c2;544,212,c1c3c4;544,214,c1c3c4;544,216,c0c1c5;544,218,c0c1c5;544,220,c0c2c3;544,222,c1c3c4;544,224,c1c1c3;548,218,b5b7bb;548,220,bfc1c2;550,208,636566;550,214,9fa1a3;550,222,242627;552,208,4b4d4f;552,224,2b2d2e;554,202,2f3334;554,208,4b4d4f;554,212,9a9c9e;554,218,6c7375;556,206,84888b;556,212,4a4c50;556,216,6f7376;558,224,1d1f20;560,206,c2c6c9;560,220,a1a3a5;560,224,6f7173;562,206,292d30;562,210,9a9ea1;562,214,0e1216;562,222,3a3c3d;564,224,4c4b4e;566,224,131313;568,206,7f8386;568,212,4c5053;568,214,5a5e61;568,216,717374;568,218,646667;568,224,0d0d0d;572,202,696e6e;572,204,6e7275;572,206,929699;574,206,54585b;576,196,b5b7b9;576,222,2b2d2e;576,224,bfc1c2;578,224,161819;580,194,6a6c6d;582,206,575958;584,206,565656;584,220,c2c6c7;584,224,0e1011;588,208,adafb1;588,210,5e6064;588,212,434549;588,214,434549;588,216,595b5d;588,218,a0a4a5;590,220,242627;590,222,b1b3b4;594,202,3a3c3d;594,214,121619;594,218,767a7d;594,224,2f3133;596,206,727778;596,214,0e1216;596,220,838587;596,224,181a1c;598,214,0e1216;600,206,989c9d;600,214,0f1317;602,202,35393a;602,206,141919;602,208,afb3b6;602,214,0f1317;602,224,1c1e1f;604,214,111315;604,218,434547;604,224,999999;606,204,babcbd;606,214,111315;606,218,76787a;608,208,9ea0a2;608,210,565859;608,214,191b1d;608,218,abadae;682,204,8e9394;682,206,686c6d;682,208,565b5c;682,210,565b5c;682,212,747879;682,214,a9aeae;684,218,555a5b;686,196,aeb0b4;686,220,181a1c;688,206,757779;688,208,929496;688,210,7e8180;688,212,5d5f60;688,222,1c1e1f;690,194,36383a;690,216,c2c4c6;690,224,9c9c9e;692,224,1f1f21;694,198,909296;694,224,191b1d;696,192,989a9c;696,220,727475;698,192,989a9c;698,214,9ea2a1;698,218,3b4242;698,220,686c6d;700,192,c1c3c4;700,198,919395;702,198,1a1c1e;702,216,a1a5a8;702,224,202224;704,200,282a2c;704,224,6d7172;706,204,303234;706,206,5a5c5e;706,208,808185;706,210,74767a;706,212,48494d;706,224,141919;708,196,b1b1b3;708,226,434547;712,204,959798;712,206,747678;712,208,666868;712,210,666868;712,212,848688;716,216,8a8d8c;716,218,bbbdbd;718,220,1e2021;720,222,1c1e1f;722,194,2e3032;722,200,5e6061;722,216,bcbec0;722,218,3c4041;722,224,303332;724,198,3b3f40;724,206,aaabaf;724,208,87888c;724,210,929498;724,224,1c1e1f;726,198,666a6b;726,210,9a9ca0;726,220,757779;728,198,282c2d;728,204,a3a7ab;728,210,646569;728,220,4a4c4e;730,200,262a2d;730,212,a2a6a9;730,224,1c1e1f;732,206,35373b;732,208,7b7d81;732,224,c0c0c2;734,222,797b7c;736,212,656768;736,218,535557"}, nw = T.w, nh = T.h, cols = [], lastPos = null;
+    T.p.split(";").forEach(function(q){ var v = q.split(","), x = +v[0]; (cols[x] = cols[x] || []).push([+v[1], "#" + v[2]]); });
+    new MutationObserver(function(){
+      var pos = +ba.getAttribute("aria-valuenow"); if (lastPos == null){ lastPos = pos; return; }
+      var from = lastPos; lastPos = pos; if (!cols || pos >= from) return;
+      var r = ba.getBoundingClientRect(), k = r.width / nw, x0 = Math.floor(pos / 100 * nw), x1 = Math.ceil(from / 100 * nw), out = [];
+      for (var x = x0; x <= x1; x++){ var c = cols[x]; if (!c) continue;
+        for (var j = 0; j < c.length; j++) out.push(grain(r.left + x * k, r.top + c[j][0] * k, c[j][1], {delay: .12, life: 1.2, vx: -40, vy: -30, wx: -30, wy: -60, s: 1.2 + Math.random() * 1.4})); }
+      add(out);
+    }).observe(ba, {attributes: true, attributeFilter: ["aria-valuenow"]});
+  })();
 })();
 </script>
 </body>
